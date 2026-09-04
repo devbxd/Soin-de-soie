@@ -6,31 +6,57 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { category, featured, slug } = req.query;
+  const { category, subcategory, featured, slug } = req.query;
 
   try {
     let rows;
     if (slug) {
       rows = await sql`
-        SELECT * FROM products WHERE is_active = true AND slug = ${slug}
+        SELECT p.*, c.slug AS category_slug, c.name AS category_name,
+               s.slug AS subcategory_slug, s.name AS subcategory_name
+        FROM products p
+        JOIN categories c ON c.id = p.category_id
+        LEFT JOIN subcategories s ON s.id = p.subcategory_id
+        WHERE p.slug = ${slug}
       `;
     } else if (featured === "true") {
       rows = await sql`
-        SELECT * FROM products
-        WHERE is_active = true AND is_featured = true
-        ORDER BY sort_order ASC, id ASC
+        SELECT p.*, c.slug AS category_slug, c.name AS category_name,
+               s.slug AS subcategory_slug, s.name AS subcategory_name
+        FROM products p
+        JOIN categories c ON c.id = p.category_id
+        LEFT JOIN subcategories s ON s.id = p.subcategory_id
+        WHERE p.is_featured = true
+        ORDER BY p.sort_order ASC, p.id ASC
+      `;
+    } else if (subcategory) {
+      rows = await sql`
+        SELECT p.*, c.slug AS category_slug, c.name AS category_name,
+               s.slug AS subcategory_slug, s.name AS subcategory_name
+        FROM products p
+        JOIN categories c ON c.id = p.category_id
+        LEFT JOIN subcategories s ON s.id = p.subcategory_id
+        WHERE s.slug = ${subcategory}
+        ORDER BY p.sort_order ASC, p.id ASC
       `;
     } else if (category) {
       rows = await sql`
-        SELECT * FROM products
-        WHERE is_active = true AND category = ${category}
-        ORDER BY sort_order ASC, id ASC
+        SELECT p.*, c.slug AS category_slug, c.name AS category_name,
+               s.slug AS subcategory_slug, s.name AS subcategory_name
+        FROM products p
+        JOIN categories c ON c.id = p.category_id
+        LEFT JOIN subcategories s ON s.id = p.subcategory_id
+        WHERE c.slug = ${category}
+        ORDER BY p.sort_order ASC, p.id ASC
       `;
     } else {
       rows = await sql`
-        SELECT * FROM products
-        WHERE is_active = true
-        ORDER BY category ASC, sort_order ASC, id ASC
+        SELECT p.*, c.slug AS category_slug, c.name AS category_name,
+               s.slug AS subcategory_slug, s.name AS subcategory_name
+        FROM products p
+        JOIN categories c ON c.id = p.category_id
+        LEFT JOIN subcategories s ON s.id = p.subcategory_id
+        ORDER BY c.sort_order ASC, p.sort_order ASC, p.id ASC
       `;
     }
 

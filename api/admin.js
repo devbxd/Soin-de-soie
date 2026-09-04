@@ -1,15 +1,19 @@
 // Consolidated admin API — every admin action goes through this one
-// serverless function, dispatched by an `action` query param instead of a
-// dynamic file-path segment. (A `[...path].js` catch-all route was tried
-// first but did not resolve `req.query.path` correctly on this deployment;
-// a flat, query-based route sidesteps that entirely and is just as capable.)
-import { sql, toPublicProduct, attachVariantsAndImages } from "./_lib/db.js";
+// serverless function, dispatched by an `action` query param (kept flat,
+// not a dynamic file-path segment, since a [...path].js catch-all did not
+// resolve correctly on this deployment).
+import { sql, attachVariantsAndImages } from "./_lib/db.js";
 import { verifyPassword, createSessionCookie, clearSessionCookie, isAuthenticated } from "./_lib/auth.js";
 
 const STATUS_OPTIONS = ["new", "confirmed", "fulfilled", "cancelled"];
+const MAX_IMAGE_BASE64_CHARS = 6_000_000; // ~4.5MB decoded, safely under Vercel's request body limit
 
 function slugify(name) {
   return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function isUniqueViolation(err) {
+  return err && err.code === "23505"; // Postgres unique_violation
 }
 
 export default async function handler(req, res) {
@@ -50,33 +54,159 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ---------- products ----------
+    // ========== CATEGORIES ==========
+    if (action === "categories") {
+      if (req.method === "GET") {
+        const [categories, subcategories] = await Promise.all([
+          sql`SELECT id, slug, name, sort_order FROM categories ORDER BY sort_order ASC, id ASC`,
+          sql`SELECT id, category_id, slug, name, sort_order FROM subcategories ORDER BY sort_order ASC, id ASC`,
+        ]);
+        const subsByCategory = new Map();
+        for (const s of subcategories) {
+          if (!subsByCategory.has(s.category_id)) subsByCategory.set(s.category_id, []);
+          subsByCategory.get(s.category_id).push(s);
+        }
+        res.status(200).json(categories.map((c) => ({ ...c, subcategories: subsByCategory.get(c.id) || [] })));
+        return;
+      }
+      if (req.method === "POST") {
+        const { name } = req.body || {};
+        if (!name || !name.trim()) {
+          res.status(400).json({ error: "Category name is required" });
+          return;
+        }
+        const slug = slugify(name);
+        try {
+          const [{ next }] = await sql`SELECT COALESCE(MAX(sort_order), 0) + 1 AS next FROM categories`;
+          const [row] = await sql`
+            INSERT INTO categories (slug, name, sort_order) VALUES (${slug}, ${name.trim()}, ${next}) RETURNING *
+          `;
+          res.status(201).json(row);
+        } catch (err) {
+          if (isUniqueViolation(err)) {
+            res.status(409).json({ error: `A category named "${name.trim()}" already exists` });
+            return;
+          }
+          throw err;
+        }
+        return;
+      }
+    }
+
+    if (action === "category" && id) {
+      if (req.method === "PUT") {
+        const { name } = req.body || {};
+        if (!name || !name.trim()) {
+          res.status(400).json({ error: "Category name is required" });
+          return;
+        }
+        const [row] = await sql`UPDATE categories SET name = ${name.trim()} WHERE id = ${id} RETURNING *`;
+        res.status(200).json(row);
+        return;
+      }
+      if (req.method === "DELETE") {
+        const [{ count }] = await sql`SELECT count(*)::int AS count FROM products WHERE category_id = ${id}`;
+        if (count > 0) {
+          res.status(400).json({ error: `Can't delete — ${count} product(s) still use this category. Move or remove them first.` });
+          return;
+        }
+        await sql`DELETE FROM categories WHERE id = ${id}`;
+        res.status(200).json({ ok: true });
+        return;
+      }
+    }
+
+    // ========== SUBCATEGORIES ==========
+    if (action === "subcategories" && req.method === "POST") {
+      const { category_id, name } = req.body || {};
+      if (!category_id || !name || !name.trim()) {
+        res.status(400).json({ error: "category_id and name are required" });
+        return;
+      }
+      const slug = slugify(name);
+      try {
+        const [{ next }] = await sql`SELECT COALESCE(MAX(sort_order), 0) + 1 AS next FROM subcategories WHERE category_id = ${category_id}`;
+        const [row] = await sql`
+          INSERT INTO subcategories (category_id, slug, name, sort_order)
+          VALUES (${category_id}, ${slug}, ${name.trim()}, ${next})
+          RETURNING *
+        `;
+        res.status(201).json(row);
+      } catch (err) {
+        if (isUniqueViolation(err)) {
+          res.status(409).json({ error: `A sub-category named "${name.trim()}" already exists in this category` });
+          return;
+        }
+        throw err;
+      }
+      return;
+    }
+
+    if (action === "subcategory" && id) {
+      if (req.method === "PUT") {
+        const { name } = req.body || {};
+        if (!name || !name.trim()) {
+          res.status(400).json({ error: "Sub-category name is required" });
+          return;
+        }
+        const [row] = await sql`UPDATE subcategories SET name = ${name.trim()} WHERE id = ${id} RETURNING *`;
+        res.status(200).json(row);
+        return;
+      }
+      if (req.method === "DELETE") {
+        // Products in this subcategory just fall back to having no subcategory
+        // (products.subcategory_id is ON DELETE SET NULL) — safe, non-destructive.
+        await sql`DELETE FROM subcategories WHERE id = ${id}`;
+        res.status(200).json({ ok: true });
+        return;
+      }
+    }
+
+    // ========== PRODUCTS ==========
     if (action === "products") {
       if (req.method === "GET") {
-        const rows = await sql`SELECT * FROM products ORDER BY category ASC, sort_order ASC, id ASC`;
+        const rows = await sql`
+          SELECT p.*, c.slug AS category_slug, c.name AS category_name,
+                 s.slug AS subcategory_slug, s.name AS subcategory_name
+          FROM products p
+          JOIN categories c ON c.id = p.category_id
+          LEFT JOIN subcategories s ON s.id = p.subcategory_id
+          ORDER BY c.sort_order ASC, p.sort_order ASC, p.id ASC
+        `;
         const { variantsByProduct, imagesByProduct } = await attachVariantsAndImages(rows);
         res.status(200).json(
           rows.map((row) => ({
-            ...toPublicProduct(row, variantsByProduct, imagesByProduct),
-            is_active: row.is_active,
+            id: row.id,
+            slug: row.slug,
+            name: row.name,
+            description: row.description,
+            price_cents: row.price_cents,
             discount_type: row.discount_type,
             discount_value: row.discount_value,
+            in_stock: row.in_stock,
+            is_featured: row.is_featured,
             sort_order: row.sort_order,
+            category_id: row.category_id,
+            category_name: row.category_name,
+            subcategory_id: row.subcategory_id,
+            subcategory_name: row.subcategory_name,
+            variants: (variantsByProduct.get(row.id) || []).map((v) => ({ id: v.id, name: v.name, color_hex: v.color_hex })),
+            images: (imagesByProduct.get(row.id) || []).map((img) => ({ id: img.id, variant_id: img.variant_id, url: `/api/images/${img.id}` })),
           }))
         );
         return;
       }
       if (req.method === "POST") {
         const b = req.body || {};
-        if (!b.name || !b.category) {
+        if (!b.name || !b.category_id) {
           res.status(400).json({ error: "name and category are required" });
           return;
         }
-        const slug = b.slug ? slugify(b.slug) : slugify(b.name);
+        const slug = slugify(b.name) + "-" + Math.random().toString(36).slice(2, 6);
         const [row] = await sql`
-          INSERT INTO products (slug, name, category, description, price_cents, discount_type, discount_value, in_stock, is_featured, sort_order)
+          INSERT INTO products (slug, name, category_id, subcategory_id, description, price_cents, discount_type, discount_value, in_stock, is_featured, sort_order)
           VALUES (
-            ${slug}, ${b.name}, ${b.category}, ${b.description || ""},
+            ${slug}, ${b.name}, ${b.category_id}, ${b.subcategory_id || null}, ${b.description || ""},
             ${b.price_cents || 0}, ${b.discount_type || "none"}, ${b.discount_value || 0},
             ${b.in_stock !== false}, ${!!b.is_featured}, ${b.sort_order || 0}
           )
@@ -98,9 +228,10 @@ export default async function handler(req, res) {
         const merged = { ...existing, ...b };
         const [row] = await sql`
           UPDATE products SET
-            name = ${merged.name}, category = ${merged.category}, description = ${merged.description},
-            price_cents = ${merged.price_cents}, discount_type = ${merged.discount_type}, discount_value = ${merged.discount_value},
-            in_stock = ${merged.in_stock}, is_featured = ${merged.is_featured}, is_active = ${merged.is_active},
+            name = ${merged.name}, category_id = ${merged.category_id}, subcategory_id = ${merged.subcategory_id || null},
+            description = ${merged.description}, price_cents = ${merged.price_cents},
+            discount_type = ${merged.discount_type}, discount_value = ${merged.discount_value},
+            in_stock = ${merged.in_stock}, is_featured = ${merged.is_featured},
             sort_order = ${merged.sort_order}, updated_at = now()
           WHERE id = ${id}
           RETURNING *
@@ -109,7 +240,9 @@ export default async function handler(req, res) {
         return;
       }
       if (req.method === "DELETE") {
-        await sql`UPDATE products SET is_active = false, updated_at = now() WHERE id = ${id}`;
+        // Real delete, per the client's request — order_items.product_id is
+        // ON DELETE SET NULL, so past orders keep their snapshot and stay intact.
+        await sql`DELETE FROM products WHERE id = ${id}`;
         res.status(200).json({ ok: true });
         return;
       }
@@ -119,6 +252,10 @@ export default async function handler(req, res) {
       const { data_base64, mime, variant_id, sort_order } = req.body || {};
       if (!data_base64 || !mime) {
         res.status(400).json({ error: "data_base64 and mime are required" });
+        return;
+      }
+      if (data_base64.length > MAX_IMAGE_BASE64_CHARS) {
+        res.status(400).json({ error: "That photo is too large — please use a smaller one (under ~4MB)." });
         return;
       }
       const buffer = Buffer.from(data_base64, "base64");
@@ -146,65 +283,30 @@ export default async function handler(req, res) {
       return;
     }
 
-    // ---------- categories ----------
-    if (action === "categories") {
-      if (req.method === "GET") {
-        const rows = await sql`SELECT * FROM categories ORDER BY sort_order ASC, id ASC`;
-        res.status(200).json(rows);
-        return;
-      }
-      if (req.method === "POST") {
-        const { name } = req.body || {};
-        if (!name || !name.trim()) {
-          res.status(400).json({ error: "name is required" });
-          return;
-        }
-        const slug = slugify(name);
-        const [{ next }] = await sql`SELECT COALESCE(MAX(sort_order), 0) + 1 AS next FROM categories`;
-        const [row] = await sql`
-          INSERT INTO categories (slug, name, sort_order)
-          VALUES (${slug}, ${name.trim()}, ${next})
-          ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
-          RETURNING *
-        `;
-        res.status(201).json(row);
-        return;
-      }
-    }
-
-    if (action === "category" && id) {
-      if (req.method === "PUT") {
-        const { name } = req.body || {};
-        if (!name || !name.trim()) {
-          res.status(400).json({ error: "name is required" });
-          return;
-        }
-        const [row] = await sql`UPDATE categories SET name = ${name.trim()} WHERE id = ${id} RETURNING *`;
-        res.status(200).json(row);
-        return;
-      }
-      if (req.method === "DELETE") {
-        await sql`DELETE FROM categories WHERE id = ${id}`;
-        res.status(200).json({ ok: true });
-        return;
-      }
-    }
-
-    // ---------- images ----------
     if (action === "image" && id && req.method === "DELETE") {
       await sql`DELETE FROM product_images WHERE id = ${id}`;
       res.status(200).json({ ok: true });
       return;
     }
 
-    // ---------- variants ----------
+    if (action === "variant" && id && req.method === "PUT") {
+      const { name } = req.body || {};
+      if (!name || !name.trim()) {
+        res.status(400).json({ error: "Color name is required" });
+        return;
+      }
+      const [row] = await sql`UPDATE product_variants SET name = ${name.trim()} WHERE id = ${id} RETURNING *`;
+      res.status(200).json(row);
+      return;
+    }
+
     if (action === "variant" && id && req.method === "DELETE") {
       await sql`DELETE FROM product_variants WHERE id = ${id}`;
       res.status(200).json({ ok: true });
       return;
     }
 
-    // ---------- orders ----------
+    // ========== ORDERS ==========
     if (action === "orders" && req.method === "GET") {
       const { status } = req.query;
       const orders = status

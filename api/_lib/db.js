@@ -24,8 +24,8 @@ export function effectivePriceCents(product) {
   return base;
 }
 
-// Attaches each product's variants + images (fetched separately, see below)
-// and shapes the public JSON response.
+// Shapes a product row (plus its pre-fetched variants/images/category info)
+// into the JSON the storefront and admin panel consume.
 export function toPublicProduct(row, variantsByProduct, imagesByProduct) {
   const variants = variantsByProduct.get(row.id) || [];
   const images = (imagesByProduct.get(row.id) || []).map((img) => ({
@@ -38,20 +38,25 @@ export function toPublicProduct(row, variantsByProduct, imagesByProduct) {
     id: row.id,
     slug: row.slug,
     name: row.name,
-    category: row.category,
     description: row.description,
     price_cents: row.price_cents,
     effective_price_cents: effectivePriceCents(row),
     discounted: row.discount_type !== "none" && effectivePriceCents(row) < row.price_cents,
     in_stock: row.in_stock,
     is_featured: row.is_featured,
+    category_id: row.category_id,
+    category_slug: row.category_slug,
+    category_name: row.category_name,
+    subcategory_id: row.subcategory_id,
+    subcategory_slug: row.subcategory_slug,
+    subcategory_name: row.subcategory_name,
     variants: variants.map((v) => ({ id: v.id, name: v.name, color_hex: v.color_hex })),
     images,
   };
 }
 
 // Fetches variants + images for a set of product rows and groups them by product_id,
-// so a product list only costs 3 queries total instead of N+1.
+// so a product list only costs 2 extra queries total instead of N+1.
 export async function attachVariantsAndImages(products) {
   if (products.length === 0) {
     return { variantsByProduct: new Map(), imagesByProduct: new Map() };

@@ -22,78 +22,48 @@
   </div>
 </header>
 
-<div class="admin-shell">
+<div class="admin-login" id="admin-login">
+  <h1>Admin Login</h1>
+  <form id="login-form" class="admin-form">
+    <label class="label" for="login-password">Password</label>
+    <input type="password" id="login-password" required>
+    <p id="login-error" class="label" style="color:var(--wine); margin-top:10px;" hidden></p>
+    <button type="submit" class="btn solid" style="margin-top:16px;">Log in</button>
+  </form>
+</div>
 
-  <div class="admin-login" id="admin-login">
-    <h1>Admin Login</h1>
-    <form id="login-form" class="admin-form">
-      <label class="label" for="login-password">Password</label>
-      <input type="password" id="login-password" required>
-      <p id="login-error" class="label" style="color:var(--wine); margin-top:10px;" hidden></p>
-      <button type="submit" class="btn solid" style="margin-top:16px;">Log in</button>
-    </form>
-  </div>
+<div class="admin-layout" id="admin-dashboard" hidden>
+  <aside class="admin-sidebar">
+    <button type="button" class="admin-nav-btn active" data-section="products">Products</button>
+    <button type="button" class="admin-nav-btn" data-section="categories">Categories</button>
+    <button type="button" class="admin-nav-btn" data-section="orders">Orders</button>
+  </aside>
 
-  <div id="admin-dashboard" hidden>
-    <div class="tabs">
-      <button type="button" class="tab-btn active" data-tab="products">Products</button>
-      <button type="button" class="tab-btn" data-tab="orders">Orders</button>
-    </div>
+  <main class="admin-main">
+    <section id="section-products">
+      <h2>Products</h2>
+      <div id="product-form-container"></div>
+      <button type="button" class="btn solid big" id="add-product-btn" style="margin-bottom:20px;">+ Add Product</button>
+      <div id="product-list"><p>Loading…</p></div>
+    </section>
 
-    <div class="tab-panel" id="tab-products">
-      <div class="manage-section" style="margin-bottom:20px;">
-        <h4>Categories</h4>
-        <div class="variant-list" id="category-chips"></div>
-        <form id="add-category-form" class="admin-form" style="margin-top:10px; flex-direction:row; gap:10px; align-items:flex-end;">
-          <div style="flex:1;">
-            <label class="label">New category name</label>
-            <input type="text" name="name" placeholder="e.g. Fragrance" required>
-          </div>
-          <button type="submit" class="btn">Add category</button>
-        </form>
-      </div>
-
-      <button type="button" class="btn solid" id="add-product-toggle" style="margin-bottom:16px;">+ Add Product</button>
-
-      <form id="add-product-form" class="admin-form" hidden style="margin-bottom:24px; padding:16px; border:1px solid var(--hairline); background:var(--surface);">
-        <label class="label">Name</label>
-        <input type="text" name="name" required>
-
-        <label class="label" style="margin-top:12px;">Category</label>
-        <select name="category" required></select>
-
-        <label class="label" style="margin-top:12px;">Description</label>
-        <textarea name="description" rows="2"></textarea>
-
-        <label class="label" style="margin-top:12px;">Price (USD)</label>
-        <input type="number" name="price" step="0.01" min="0" value="0">
-
-        <label class="label" style="margin-top:12px;">Discount</label>
-        <div style="display:flex; gap:10px;">
-          <select name="discount_type" style="flex:1;">
-            <option value="none">No discount</option>
-            <option value="percent">Percent off</option>
-            <option value="fixed">Fixed amount off</option>
-          </select>
-          <input type="number" name="discount_value" min="0" value="0" style="flex:1;" placeholder="e.g. 15">
+    <section id="section-categories" hidden>
+      <h2>Categories</h2>
+      <div class="category-tree" id="category-tree"><p>Loading…</p></div>
+      <form id="add-category-form" class="admin-form" style="flex-direction:row; gap:10px; align-items:flex-end; max-width:420px;">
+        <div style="flex:1;">
+          <label class="label">New category</label>
+          <input type="text" name="name" placeholder="e.g. Fragrance" required>
         </div>
-
-        <label class="checkbox-row"><input type="checkbox" name="in_stock" checked> In stock</label>
-        <label class="checkbox-row"><input type="checkbox" name="is_featured"> Featured on homepage</label>
-
-        <div class="hero-cta" style="margin-top:16px;">
-          <button type="submit" class="btn solid">Create product</button>
-        </div>
+        <button type="submit" class="btn">Add category</button>
       </form>
+    </section>
 
-      <div id="product-list"></div>
-    </div>
-
-    <div class="tab-panel" id="tab-orders" hidden>
-      <div id="order-list"></div>
-    </div>
-  </div>
-
+    <section id="section-orders" hidden>
+      <h2>Orders</h2>
+      <div id="order-list"><p>Loading…</p></div>
+    </section>
+  </main>
 </div>
 
 <script src="assets/js/admin.js"></script>

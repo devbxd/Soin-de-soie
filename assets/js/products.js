@@ -3,13 +3,9 @@
 // swatches (click a swatch, the photo for that color appears), linking to
 // the product detail page and wiring up Add to Cart.
 
-// Categories are admin-defined and can be anything, so this is just a
-// readable fallback label built from the slug (e.g. "gift-sets" -> "Gift Sets").
-const CATEGORY_LABELS = {};
-
-function categoryLabel(slug) {
-  if (CATEGORY_LABELS[slug]) return CATEGORY_LABELS[slug];
-  return slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+// The API already joins category/sub-category names — no guessing needed.
+function categoryLabel(product) {
+  return product.subcategory_name ? `${product.category_name} — ${product.subcategory_name}` : product.category_name;
 }
 
 function formatPrice(cents) {
@@ -125,8 +121,8 @@ function buildInfoBlock(product, { spotlight = false } = {}) {
   const cat = document.createElement("span");
   cat.className = "product-cat";
   cat.textContent = spotlight
-    ? `${categoryLabel(product.category)} — Featured`
-    : categoryLabel(product.category);
+    ? `${categoryLabel(product)} — Featured`
+    : categoryLabel(product);
 
   const name = document.createElement("h3");
   name.className = "product-name";
