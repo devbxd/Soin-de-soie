@@ -1,6 +1,5 @@
 // Soin de Soie — site behaviour
 
-// TODO: replace with the client's real WhatsApp number (international format, no "+")
 const WHATSAPP_NUMBER = "9613052374";
 const WHATSAPP_MESSAGE = "Hello Soin de Soie, I'd like more information.";
 window.WHATSAPP_NUMBER = WHATSAPP_NUMBER;
@@ -31,7 +30,18 @@ function wireProductPhotoFallback(root = document) {
 }
 window.wireProductPhotoFallback = wireProductPhotoFallback;
 
+// Injected on every page (rather than hand-copied into every HTML file) so
+// the message only needs updating in one place.
+function injectAnnounceBar() {
+  if (document.querySelector(".announce-bar")) return;
+  const bar = document.createElement("div");
+  bar.className = "announce-bar";
+  bar.textContent = "Livraison partout au Liban — Paiement à la livraison";
+  document.body.prepend(bar);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  injectAnnounceBar();
   wireWhatsAppLinks();
   wireProductPhotoFallback();
 

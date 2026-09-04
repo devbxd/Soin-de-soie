@@ -16,8 +16,22 @@ function categoryUrl(cat) {
   return `category.html?slug=${encodeURIComponent(cat.slug)}`;
 }
 
+// A second, bolder row of category links right under the header — injected
+// here (rather than duplicated in every HTML file) so it appears everywhere
+// and stays in sync with whatever categories the admin has created.
+function injectSubnav(categories) {
+  if (categories.length === 0 || document.querySelector(".subnav-bar")) return;
+  const header = document.querySelector(".site-header");
+  if (!header) return;
+  const bar = document.createElement("div");
+  bar.className = "subnav-bar";
+  bar.innerHTML = `<div class="wrap subnav-row">${categories.map((c) => `<a href="${categoryUrl(c)}">${c.name}</a>`).join("")}</div>`;
+  header.after(bar);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const categories = await loadCategories();
+  injectSubnav(categories);
 
   const navSlot = document.getElementById("nav-categories");
   if (navSlot) {
