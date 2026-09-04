@@ -1,0 +1,13 @@
+{
+  "name": "soin-de-soie",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed-image": "node db/seed-image.mjs"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "resend": "^4.0.1",
+    "cookie": "^1.0.2"
+  }
+}

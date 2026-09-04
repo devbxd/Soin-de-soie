@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout — Soin de Soie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="brandmark" href="index.html">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M16 6c-3 3-3 7 0 10-3-3-7-3-10 0 3-3 3-7 0-10 3 3 7 3 10 0Z" fill="var(--rose)"/><path d="M16 6c3 3 3 7 0 10 3-3 7-3 10 0-3-3-3-7 0-10-3 3-7 3-10 0Z" fill="var(--gold)"/><circle cx="16" cy="16" r="1.6" fill="var(--wine)"/></svg>
+      <span>Soin de Soie</span>
+    </a>
+    <button class="nav-toggle" aria-label="Open menu" aria-expanded="false"><span></span></button>
+    <nav class="main-nav">
+      <a href="index.html">Home</a>
+      <a href="about.html">Our Story</a>
+      <a href="skincare.html">Skincare</a>
+      <a href="makeup.html">Makeup</a>
+      <a href="gifts.html">Gift Sets</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <a class="btn solid whatsapp header-cta" href="#" data-whatsapp>Order Now</a>
+  </div>
+</header>
+
+<section class="block" style="padding-top:56px;">
+  <div class="wrap">
+    <div class="block-head">
+      <div><span class="label">Checkout</span></div>
+      <h1>Review &amp; order</h1>
+    </div>
+
+    <div id="checkout-confirmation" class="todo-note" style="border-style:solid; border-color:var(--wine); color:var(--ink);" hidden>
+      <b>Thank you!</b> Your order has been received. We'll be in touch shortly to confirm delivery — payment is cash on delivery.
+    </div>
+
+    <div class="checkout-grid">
+      <div>
+        <h3 style="margin-bottom:16px;">Your items</h3>
+        <div id="checkout-items"></div>
+        <div class="cart-total" style="margin-top:16px; font-size:20px;">
+          <span>Total</span><span id="checkout-total">$0.00</span>
+        </div>
+      </div>
+
+      <form id="checkout-form" class="admin-form" onsubmit="return false;">
+        <h3 style="margin-bottom:16px;">Your details</h3>
+
+        <label class="label" for="checkout-name">Full name</label>
+        <input type="text" id="checkout-name" required>
+
+        <label class="label" for="checkout-phone" style="margin-top:14px;">Phone number</label>
+        <input type="tel" id="checkout-phone" required>
+
+        <label class="label" for="checkout-address" style="margin-top:14px;">Delivery address</label>
+        <div style="display:flex; gap:10px; margin-bottom:8px;">
+          <button type="button" class="btn" id="locate-btn">Use my location</button>
+          <span id="locate-status" style="font-size:12.5px; color:var(--ink-soft); align-self:center;"></span>
+        </div>
+        <textarea id="checkout-address" rows="3" placeholder="Street, building, city…"></textarea>
+
+        <p id="checkout-error" class="label" style="color:var(--wine); margin-top:10px;" hidden></p>
+
+        <div class="todo-note" style="margin-top:18px;">
+          <b>Payment:</b> Cash on delivery — pay when your order arrives.
+        </div>
+
+        <div class="hero-cta" style="margin-top:20px;">
+          <button type="button" class="btn solid" id="order-website-btn">Place Order</button>
+          <button type="button" class="btn whatsapp" id="order-whatsapp-btn">Order via WhatsApp</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> Soin de Soie</span>
+      <span>Beirut, Lebanon</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/script.js"></script>
+<script src="assets/js/cart.js"></script>
+<script src="assets/js/checkout.js"></script>
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+</body>
+</html>
