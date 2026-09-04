@@ -36,7 +36,7 @@ function injectAnnounceBar() {
   if (document.querySelector(".announce-bar")) return;
   const bar = document.createElement("div");
   bar.className = "announce-bar";
-  bar.textContent = "Livraison partout au Liban — Paiement à la livraison";
+  bar.textContent = "Delivery all over Lebanon — Cash on Delivery";
   document.body.prepend(bar);
 }
 

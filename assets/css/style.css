@@ -154,8 +154,12 @@ a{ color: inherit; }
   }
   .main-nav.open{ display: flex; }
   .main-nav a{ padding: 12px 0; width: 100%; border-bottom: 1px solid rgba(248,244,234,.15); }
-  .nav-toggle{ display: flex; }
+  .nav-toggle{ display: flex; order: 1; }
   .header-cta{ display: none; }
+  /* centered logo between the menu and cart icons, like most beauty-DTC headers */
+  .header-row{ justify-content: space-between; }
+  .brandmark{ order: 2; flex: 1; justify-content: center; }
+  .cart-toggle{ order: 3; }
 }
 
 /* ---------- category sub-bar ---------- */
@@ -256,8 +260,14 @@ a{ color: inherit; }
 
 @media (max-width: 860px){
   .hero{ grid-template-columns: 1fr; min-height: 0; }
-  .hero-copy{ padding: 44px 24px 32px; max-width: none; }
-  .hero-visual{ min-height: 320px; }
+  /* full-bleed photo first, copy block underneath — matches the reference site's phone layout */
+  .hero-visual{ order: -1; min-height: 0; aspect-ratio: 4/5; }
+  .hero-visual img{ width: 100%; max-width: none; height: 100%; object-fit: cover; filter: none; }
+  .hero-copy{ padding: 32px 24px 36px; max-width: none; text-align: center; align-items: center; }
+  .hero-copy p{ max-width: 34ch; }
+  .hero-cta{ justify-content: center; width: 100%; }
+  .hero-cta .btn{ flex: 1; justify-content: center; min-width: 140px; }
+  .hero-trust{ justify-content: center; text-align: center; }
 }
 
 /* ---------- category strip ---------- */
