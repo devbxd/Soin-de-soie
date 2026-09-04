@@ -51,42 +51,64 @@ function makeRes(res) {
   return res;
 }
 
-// Mimics Vercel's file-based /api routing, including dynamic [param] segments
-// and nested dynamic folders (e.g. api/admin/products/[id]/images.js).
+// Mimics Vercel's file-based /api routing: dynamic [param] segments, nested
+// dynamic folders, and catch-all [...param].js routes.
 function resolveApiFile(parts) {
   let dir = path.join(root, "api");
   const params = {};
 
-  for (let i = 0; i < parts.length - 1; i++) {
+  for (let i = 0; i < parts.length; i++) {
     const seg = parts[i];
-    const literal = path.join(dir, seg);
-    if (existsSync(literal) && statSync(literal).isDirectory()) {
-      dir = literal;
-      continue;
+    const isLast = i === parts.length - 1;
+
+    if (!isLast) {
+      const literalDir = path.join(dir, seg);
+      if (existsSync(literalDir) && statSync(literalDir).isDirectory()) {
+        dir = literalDir;
+        continue;
+      }
+      const entries = existsSync(dir) ? readdirSync(dir) : [];
+      const bracketDir = entries.find(
+        (e) => /^\[[^.].*\]$/.test(e) && statSync(path.join(dir, e)).isDirectory()
+      );
+      if (bracketDir) {
+        params[bracketDir.slice(1, -1)] = seg;
+        dir = path.join(dir, bracketDir);
+        continue;
+      }
+      const catchAll = entries.find((e) => /^\[\.\.\..+\]\.js$/.test(e));
+      if (catchAll) {
+        const paramName = catchAll.slice(4, catchAll.indexOf("]"));
+        params[paramName] = parts.slice(i);
+        return { file: path.join(dir, catchAll), params };
+      }
+      return null;
     }
+
+    // last segment
+    const literalFile = path.join(dir, seg + ".js");
+    if (existsSync(literalFile)) return { file: literalFile, params };
+
+    const literalDir = path.join(dir, seg);
+    if (existsSync(literalDir) && statSync(literalDir).isDirectory()) {
+      const index = path.join(literalDir, "index.js");
+      if (existsSync(index)) return { file: index, params };
+    }
+
     const entries = existsSync(dir) ? readdirSync(dir) : [];
-    const bracketDir = entries.find((e) => /^\[.+\]$/.test(e) && statSync(path.join(dir, e)).isDirectory());
-    if (!bracketDir) return null;
-    params[bracketDir.slice(1, -1)] = seg;
-    dir = path.join(dir, bracketDir);
-  }
+    const bracketFile = entries.find((e) => /^\[[^.][^\]]*\]\.js$/.test(e));
+    if (bracketFile) {
+      const paramName = bracketFile.slice(1, bracketFile.indexOf("]"));
+      params[paramName] = seg;
+      return { file: path.join(dir, bracketFile), params };
+    }
 
-  const last = parts[parts.length - 1];
-  const literalFile = path.join(dir, last + ".js");
-  if (existsSync(literalFile)) return { file: literalFile, params };
-
-  const literalDir = path.join(dir, last);
-  if (existsSync(literalDir) && statSync(literalDir).isDirectory()) {
-    const index = path.join(literalDir, "index.js");
-    if (existsSync(index)) return { file: index, params };
-  }
-
-  const entries = existsSync(dir) ? readdirSync(dir) : [];
-  const bracketFile = entries.find((e) => /^\[.+\]\.js$/.test(e));
-  if (bracketFile) {
-    const paramName = bracketFile.slice(1, bracketFile.indexOf("]"));
-    params[paramName] = last;
-    return { file: path.join(dir, bracketFile), params };
+    const catchAll = entries.find((e) => /^\[\.\.\..+\]\.js$/.test(e));
+    if (catchAll) {
+      const paramName = catchAll.slice(4, catchAll.indexOf("]"));
+      params[paramName] = [seg];
+      return { file: path.join(dir, catchAll), params };
+    }
   }
 
   return null;
