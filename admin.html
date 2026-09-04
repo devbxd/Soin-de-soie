@@ -41,6 +41,18 @@
     </div>
 
     <div class="tab-panel" id="tab-products">
+      <div class="manage-section" style="margin-bottom:20px;">
+        <h4>Categories</h4>
+        <div class="variant-list" id="category-chips"></div>
+        <form id="add-category-form" class="admin-form" style="margin-top:10px; flex-direction:row; gap:10px; align-items:flex-end;">
+          <div style="flex:1;">
+            <label class="label">New category name</label>
+            <input type="text" name="name" placeholder="e.g. Fragrance" required>
+          </div>
+          <button type="submit" class="btn">Add category</button>
+        </form>
+      </div>
+
       <button type="button" class="btn solid" id="add-product-toggle" style="margin-bottom:16px;">+ Add Product</button>
 
       <form id="add-product-form" class="admin-form" hidden style="margin-bottom:24px; padding:16px; border:1px solid var(--hairline); background:var(--surface);">
@@ -48,11 +60,7 @@
         <input type="text" name="name" required>
 
         <label class="label" style="margin-top:12px;">Category</label>
-        <select name="category" required>
-          <option value="skincare">Skincare</option>
-          <option value="makeup">Makeup</option>
-          <option value="gifts">Gifts</option>
-        </select>
+        <select name="category" required></select>
 
         <label class="label" style="margin-top:12px;">Description</label>
         <textarea name="description" rows="2"></textarea>

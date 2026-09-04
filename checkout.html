@@ -20,10 +20,7 @@
     <button class="nav-toggle" aria-label="Open menu" aria-expanded="false"><span></span></button>
     <nav class="main-nav">
       <a href="index.html">Home</a>
-      <a href="about.html">Our Story</a>
-      <a href="skincare.html">Skincare</a>
-      <a href="makeup.html">Makeup</a>
-      <a href="gifts.html">Gift Sets</a>
+      <span id="nav-categories"></span>
       <a href="contact.html">Contact</a>
     </nav>
     <a class="btn solid whatsapp header-cta" href="#" data-whatsapp>Order Now</a>
@@ -37,7 +34,7 @@
       <h1>Review &amp; order</h1>
     </div>
 
-    <div id="checkout-confirmation" class="todo-note" style="border-style:solid; border-color:var(--wine); color:var(--ink);" hidden>
+    <div id="checkout-confirmation" class="notice-box" style="border-style:solid; border-color:var(--wine); color:var(--ink);" hidden>
       <b>Thank you!</b> Your order has been received. We'll be in touch shortly to confirm delivery — payment is cash on delivery.
     </div>
 
@@ -68,7 +65,7 @@
 
         <p id="checkout-error" class="label" style="color:var(--wine); margin-top:10px;" hidden></p>
 
-        <div class="todo-note" style="margin-top:18px;">
+        <div class="notice-box" style="margin-top:18px;">
           <b>Payment:</b> Cash on delivery — pay when your order arrives.
         </div>
 
@@ -93,6 +90,7 @@
 <script src="assets/js/script.js"></script>
 <script src="assets/js/cart.js"></script>
 <script src="assets/js/checkout.js"></script>
+<script src="assets/js/nav.js"></script>
 <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
 </body>
 </html>

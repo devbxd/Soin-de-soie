@@ -3,11 +3,14 @@
 // swatches (click a swatch, the photo for that color appears), linking to
 // the product detail page and wiring up Add to Cart.
 
-const CATEGORY_LABELS = {
-  skincare: "Skincare",
-  makeup: "Makeup",
-  gifts: "Gift Set",
-};
+// Categories are admin-defined and can be anything, so this is just a
+// readable fallback label built from the slug (e.g. "gift-sets" -> "Gift Sets").
+const CATEGORY_LABELS = {};
+
+function categoryLabel(slug) {
+  if (CATEGORY_LABELS[slug]) return CATEGORY_LABELS[slug];
+  return slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
 
 function formatPrice(cents) {
   return `$${(cents / 100).toFixed(2)}`;
@@ -122,8 +125,8 @@ function buildInfoBlock(product, { spotlight = false } = {}) {
   const cat = document.createElement("span");
   cat.className = "product-cat";
   cat.textContent = spotlight
-    ? `${CATEGORY_LABELS[product.category] || product.category} — Featured`
-    : CATEGORY_LABELS[product.category] || product.category;
+    ? `${categoryLabel(product.category)} — Featured`
+    : categoryLabel(product.category);
 
   const name = document.createElement("h3");
   name.className = "product-name";

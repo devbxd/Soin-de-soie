@@ -1,6 +1,12 @@
-// Soin de Soie — admin panel (login, product CRUD incl. photos/variants, orders).
+// Soin de Soie — admin panel (login, categories, product CRUD incl. photos/variants, orders).
 
-const CATEGORY_OPTIONS = ["skincare", "makeup", "gifts"];
+let categories = [];
+
+function categoryOptionsHtml(selectedSlug) {
+  return categories
+    .map((c) => `<option value="${c.slug}" ${c.slug === selectedSlug ? "selected" : ""}>${c.name}</option>`)
+    .join("");
+}
 
 async function api(method, url, body) {
   const res = await fetch(url, {
@@ -40,12 +46,36 @@ function showLogin() {
   document.getElementById("admin-dashboard").hidden = true;
 }
 
-function showDashboard() {
+async function showDashboard() {
   document.getElementById("admin-login").hidden = true;
   document.getElementById("admin-dashboard").hidden = false;
+  await loadCategories();
   loadProducts();
   loadOrders();
 }
+
+async function loadCategories() {
+  categories = await api("GET", "/api/categories");
+  renderCategoryChips();
+  const select = document.querySelector('#add-product-form select[name="category"]');
+  if (select) select.innerHTML = categoryOptionsHtml();
+}
+
+function renderCategoryChips() {
+  const el = document.getElementById("category-chips");
+  if (!el) return;
+  el.innerHTML = categories.map((c) => `<span class="variant-chip">${c.name}</span>`).join("") || "<p style='font-size:13px;color:var(--ink-soft);'>No categories yet — add one below.</p>";
+}
+
+document.getElementById("add-category-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const name = f.name.value.trim();
+  if (!name) return;
+  await api("POST", "/api/admin/categories", { name });
+  f.reset();
+  await loadCategories();
+});
 
 async function checkSession() {
   const { authenticated } = await fetch("/api/admin/session").then((r) => r.json());
@@ -174,7 +204,7 @@ function buildEditFormHtml(p) {
 
       <label class="label" style="margin-top:12px;">Category</label>
       <select name="category">
-        ${CATEGORY_OPTIONS.map((c) => `<option value="${c}" ${c === p.category ? "selected" : ""}>${c}</option>`).join("")}
+        ${categoryOptionsHtml(p.category)}
       </select>
 
       <label class="label" style="margin-top:12px;">Description</label>

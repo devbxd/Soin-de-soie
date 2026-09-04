@@ -4,7 +4,6 @@
 import { sql, toPublicProduct, attachVariantsAndImages } from "../_lib/db.js";
 import { verifyPassword, createSessionCookie, clearSessionCookie, isAuthenticated } from "../_lib/auth.js";
 
-const CATEGORY_OPTIONS = ["skincare", "makeup", "gifts"];
 const STATUS_OPTIONS = ["new", "confirmed", "fulfilled", "cancelled"];
 
 function slugify(name) {
@@ -137,6 +136,32 @@ export default async function handler(req, res) {
       `;
       res.status(201).json(row);
       return;
+    }
+
+    // ---------- categories ----------
+    if (resource === "categories" && !id) {
+      if (req.method === "GET") {
+        const rows = await sql`SELECT * FROM categories ORDER BY sort_order ASC, id ASC`;
+        res.status(200).json(rows);
+        return;
+      }
+      if (req.method === "POST") {
+        const { name } = req.body || {};
+        if (!name || !name.trim()) {
+          res.status(400).json({ error: "name is required" });
+          return;
+        }
+        const slug = slugify(name);
+        const [{ next }] = await sql`SELECT COALESCE(MAX(sort_order), 0) + 1 AS next FROM categories`;
+        const [row] = await sql`
+          INSERT INTO categories (slug, name, sort_order)
+          VALUES (${slug}, ${name.trim()}, ${next})
+          ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+          RETURNING *
+        `;
+        res.status(201).json(row);
+        return;
+      }
     }
 
     // ---------- images ----------

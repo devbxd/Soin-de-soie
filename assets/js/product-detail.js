@@ -48,8 +48,8 @@ async function loadProductDetail() {
   breadcrumb.style.display = "inline-block";
   breadcrumb.style.marginBottom = "12px";
   breadcrumb.style.textDecoration = "none";
-  breadcrumb.href = `${product.category}.html`;
-  breadcrumb.textContent = `← ${CATEGORY_LABELS[product.category] || product.category}`;
+  breadcrumb.href = `category.html?slug=${encodeURIComponent(product.category)}`;
+  breadcrumb.textContent = `← ${categoryLabel(product.category)}`;
 
   const name = document.createElement("h1");
   name.textContent = product.name;

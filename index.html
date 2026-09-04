@@ -21,10 +21,7 @@
     <button class="nav-toggle" aria-label="Open menu" aria-expanded="false"><span></span></button>
     <nav class="main-nav">
       <a href="index.html" aria-current="page">Home</a>
-      <a href="about.html">Our Story</a>
-      <a href="skincare.html">Skincare</a>
-      <a href="makeup.html">Makeup</a>
-      <a href="gifts.html">Gift Sets</a>
+      <span id="nav-categories"></span>
       <a href="contact.html">Contact</a>
     </nav>
     <a class="btn solid whatsapp header-cta" href="#" data-whatsapp>Order Now</a>
@@ -37,7 +34,7 @@
     <h1>Skin like <em>a thread of silk.</em></h1>
     <p>Skincare and makeup crafted to reveal your natural glow — presented by the founder herself, from the first swatch to your doorstep.</p>
     <div class="hero-cta">
-      <a class="btn solid" href="makeup.html">Shop the Collection</a>
+      <a class="btn solid" href="#featured">Shop the Collection</a>
       <a class="btn whatsapp" href="#" data-whatsapp>Order on WhatsApp</a>
     </div>
   </div>
@@ -50,13 +47,9 @@
   </div>
 </section>
 
-<nav class="strip" aria-label="Categories">
-  <a href="skincare.html"><h3>Skincare</h3><p>Creams, serums, face rituals</p></a>
-  <a href="makeup.html"><h3>Makeup</h3><p>Lips and complexion, gentle formulas</p></a>
-  <a href="gifts.html"><h3>Gift Sets</h3><p>Signature boxes, made to give</p></a>
-</nav>
+<nav class="strip" aria-label="Categories" id="category-strip"></nav>
 
-<section class="block">
+<section class="block" id="featured">
   <div class="wrap">
     <div class="block-head">
       <div><span class="label">Spotlight</span></div>
@@ -68,38 +61,7 @@
   </div>
 </section>
 
-<section class="block">
-  <div class="wrap">
-    <div class="block-head">
-      <div><span class="label">Our Story</span></div>
-      <h2>A brand carried by its founder</h2>
-    </div>
-    <div class="founder">
-      <div class="founder-media">Founder photo — coming soon</div>
-      <div>
-        <p style="font-size:15.5px; color:var(--ink);">Soin de Soie was born from a simple idea: well cared-for skin should feel like silk — soft, luminous, effortless. Every product is introduced and explained directly by its founder, before it ever reaches you.</p>
-        <a class="btn" href="about.html" style="margin-top:18px;">Read Our Story</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="block" style="border-bottom:none;">
-  <div class="wrap">
-    <div class="block-head">
-      <div><span class="label">Reviews</span></div>
-      <h2>What our customers say</h2>
-    </div>
-    <div class="testimonial-grid">
-      <div class="testimonial"><span class="stars">★★★★★</span><p>“Placeholder — to be replaced with a real customer review.”</p><span class="who">Customer to confirm</span></div>
-      <div class="testimonial"><span class="stars">★★★★★</span><p>“Placeholder — to be replaced with a real customer review.”</p><span class="who">Customer to confirm</span></div>
-      <div class="testimonial"><span class="stars">★★★★★</span><p>“Placeholder — to be replaced with a real customer review.”</p><span class="who">Customer to confirm</span></div>
-    </div>
-    <div class="todo-note"><b>To do:</b> pull 3 real reviews from the Instagram "Feedback" highlight to replace these placeholders.</div>
-  </div>
-</section>
-
-<section class="cta-band">
+<section class="cta-band" style="border-bottom:none;">
   <div class="wrap">
     <h2>A question before you order?</h2>
     <p>Message us directly — the founder replies to every message herself.</p>
@@ -121,10 +83,7 @@
       </div>
       <div>
         <h5>Navigation</h5>
-        <a href="skincare.html">Skincare</a>
-        <a href="makeup.html">Makeup</a>
-        <a href="gifts.html">Gift Sets</a>
-        <a href="about.html">Our Story</a>
+        <span id="footer-categories"></span>
       </div>
       <div>
         <h5>Contact</h5>
@@ -144,6 +103,7 @@
 <script src="assets/js/script.js"></script>
 <script src="assets/js/cart.js"></script>
 <script src="assets/js/products.js"></script>
+<script src="assets/js/nav.js"></script>
 <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
 </body>
 </html>

@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Makeup — Soin de Soie</title>
-<meta name="description" content="Soin de Soie makeup — gentle lip and complexion formulas, including the Pout Perfection Lipgloss.">
+<title>Category — Soin de Soie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,10 +20,7 @@
     <button class="nav-toggle" aria-label="Open menu" aria-expanded="false"><span></span></button>
     <nav class="main-nav">
       <a href="index.html">Home</a>
-      <a href="about.html">Our Story</a>
-      <a href="skincare.html">Skincare</a>
-      <a href="makeup.html" aria-current="page">Makeup</a>
-      <a href="gifts.html">Gift Sets</a>
+      <span id="nav-categories"></span>
       <a href="contact.html">Contact</a>
     </nav>
     <a class="btn solid whatsapp header-cta" href="#" data-whatsapp>Order Now</a>
@@ -34,16 +30,17 @@
 <section class="block" style="padding-top:56px;">
   <div class="wrap">
     <div class="block-head">
-      <div><span class="label">Makeup</span></div>
-      <h1>Gentle formulas, for lips and complexion</h1>
+      <div><span class="label">Collection</span></div>
+      <h1 id="category-heading">Loading…</h1>
     </div>
   </div>
 </section>
 
 <section class="block" style="border-bottom:none;">
   <div class="wrap">
-    <div class="product-grid" data-category="makeup"></div>
-    <div class="todo-note"><b>To do:</b> add/edit makeup products (including the Pout Perfection Lipgloss photo and price) from the admin panel.</div>
+    <div class="product-grid" id="category-grid" data-category="">
+      <script>document.getElementById("category-grid").dataset.category = new URLSearchParams(location.search).get("slug") || "";</script>
+    </div>
   </div>
 </section>
 
@@ -58,10 +55,7 @@
       </div>
       <div>
         <h5>Navigation</h5>
-        <a href="skincare.html">Skincare</a>
-        <a href="makeup.html">Makeup</a>
-        <a href="gifts.html">Gift Sets</a>
-        <a href="about.html">Our Story</a>
+        <span id="footer-categories"></span>
       </div>
       <div>
         <h5>Contact</h5>
@@ -81,6 +75,8 @@
 <script src="assets/js/script.js"></script>
 <script src="assets/js/cart.js"></script>
 <script src="assets/js/products.js"></script>
+<script src="assets/js/category.js"></script>
+<script src="assets/js/nav.js"></script>
 <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
 </body>
 </html>
