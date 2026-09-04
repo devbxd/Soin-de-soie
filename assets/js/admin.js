@@ -59,7 +59,9 @@ async function showDashboard() {
 }
 
 async function loadCategories() {
-  categories = await api("GET", "/api/categories");
+  // Use the admin endpoint (has ids, never cached) — the public /api/categories
+  // is cached for site performance and lacks ids, which broke rename/delete.
+  categories = await api("GET", "/api/admin?action=categories");
   renderCategoryChips();
   const select = document.querySelector('#add-product-form select[name="category"]');
   if (select) select.innerHTML = categoryOptionsHtml();

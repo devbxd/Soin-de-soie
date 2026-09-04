@@ -42,6 +42,13 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Actions that take an id must get a real numeric one, or every id-based
+  // action below (WHERE id = ...) fails with a confusing DB-level crash.
+  if (id !== undefined && !/^\d+$/.test(String(id))) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
   try {
     // ---------- products ----------
     if (action === "products") {
