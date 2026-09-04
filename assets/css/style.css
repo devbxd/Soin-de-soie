@@ -270,6 +270,17 @@ a{ color: inherit; }
   .hero-trust{ justify-content: center; text-align: center; }
 }
 
+/* ---------- trust strip ---------- */
+.trust-strip{
+  display: flex; justify-content: center; flex-wrap: wrap; gap: 32px;
+  padding: 18px 28px; background: var(--ink); color: var(--surface);
+}
+.trust-strip span{
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; letter-spacing: .04em; font-weight: 600; white-space: nowrap;
+}
+.trust-strip svg{ width: 17px; height: 17px; flex: none; color: var(--rose); }
+
 /* ---------- category strip ---------- */
 .strip{
   display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
