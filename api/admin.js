@@ -165,6 +165,24 @@ export default async function handler(req, res) {
       }
     }
 
+    if (action === "category" && id) {
+      if (req.method === "PUT") {
+        const { name } = req.body || {};
+        if (!name || !name.trim()) {
+          res.status(400).json({ error: "name is required" });
+          return;
+        }
+        const [row] = await sql`UPDATE categories SET name = ${name.trim()} WHERE id = ${id} RETURNING *`;
+        res.status(200).json(row);
+        return;
+      }
+      if (req.method === "DELETE") {
+        await sql`DELETE FROM categories WHERE id = ${id}`;
+        res.status(200).json({ ok: true });
+        return;
+      }
+    }
+
     // ---------- images ----------
     if (action === "image" && id && req.method === "DELETE") {
       await sql`DELETE FROM product_images WHERE id = ${id}`;

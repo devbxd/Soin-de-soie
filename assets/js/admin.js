@@ -49,7 +49,11 @@ function showLogin() {
 async function showDashboard() {
   document.getElementById("admin-login").hidden = true;
   document.getElementById("admin-dashboard").hidden = false;
-  await loadCategories();
+  try {
+    await loadCategories();
+  } catch (err) {
+    alert("Couldn't load categories: " + err.message);
+  }
   loadProducts();
   loadOrders();
 }
@@ -64,7 +68,43 @@ async function loadCategories() {
 function renderCategoryChips() {
   const el = document.getElementById("category-chips");
   if (!el) return;
-  el.innerHTML = categories.map((c) => `<span class="variant-chip">${c.name}</span>`).join("") || "<p style='font-size:13px;color:var(--ink-soft);'>No categories yet — add one below.</p>";
+  el.innerHTML =
+    categories
+      .map(
+        (c) => `<span class="variant-chip" data-category-id="${c.id}">
+          <span class="chip-name">${c.name}</span>
+          <button type="button" data-action="rename-category" data-id="${c.id}" aria-label="Rename">✎</button>
+          <button type="button" data-action="delete-category" data-id="${c.id}" aria-label="Delete">&times;</button>
+        </span>`
+      )
+      .join("") || "<p style='font-size:13px;color:var(--ink-soft);'>No categories yet — add one below.</p>";
+
+  el.querySelectorAll('[data-action="rename-category"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const current = categories.find((c) => c.id === Number(btn.dataset.id));
+      const name = prompt("Rename category:", current?.name || "");
+      if (!name || !name.trim()) return;
+      try {
+        await api("PUT", `/api/admin?action=category&id=${btn.dataset.id}`, { name });
+        await loadCategories();
+      } catch (err) {
+        alert("Couldn't rename category: " + err.message);
+      }
+    });
+  });
+
+  el.querySelectorAll('[data-action="delete-category"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const current = categories.find((c) => c.id === Number(btn.dataset.id));
+      if (!confirm(`Delete category "${current?.name}"? Products already using it keep their category, but it disappears from the site menu.`)) return;
+      try {
+        await api("DELETE", `/api/admin?action=category&id=${btn.dataset.id}`);
+        await loadCategories();
+      } catch (err) {
+        alert("Couldn't delete category: " + err.message);
+      }
+    });
+  });
 }
 
 document.getElementById("add-category-form").addEventListener("submit", async (e) => {
@@ -72,9 +112,13 @@ document.getElementById("add-category-form").addEventListener("submit", async (e
   const f = e.target;
   const name = f.name.value.trim();
   if (!name) return;
-  await api("POST", "/api/admin?action=categories", { name });
-  f.reset();
-  await loadCategories();
+  try {
+    await api("POST", "/api/admin?action=categories", { name });
+    f.reset();
+    await loadCategories();
+  } catch (err) {
+    alert("Couldn't add category: " + err.message);
+  }
 });
 
 async function checkSession() {
@@ -133,22 +177,30 @@ document.getElementById("add-product-form").addEventListener("submit", async (e)
     in_stock: f.in_stock.checked,
     is_featured: f.is_featured.checked,
   };
-  await api("POST", "/api/admin?action=products", payload);
-  f.reset();
-  document.getElementById("add-product-form").hidden = true;
-  loadProducts();
+  try {
+    await api("POST", "/api/admin?action=products", payload);
+    f.reset();
+    document.getElementById("add-product-form").hidden = true;
+    loadProducts();
+  } catch (err) {
+    alert("Couldn't create product: " + err.message);
+  }
 });
 
 async function loadProducts() {
   const list = document.getElementById("product-list");
   list.innerHTML = `<p>Loading…</p>`;
-  const products = await api("GET", "/api/admin?action=products");
-  list.innerHTML = "";
-  if (products.length === 0) {
-    list.innerHTML = `<p>No products yet — add your first one above.</p>`;
-    return;
+  try {
+    const products = await api("GET", "/api/admin?action=products");
+    list.innerHTML = "";
+    if (products.length === 0) {
+      list.innerHTML = `<p>No products yet — add your first one above.</p>`;
+      return;
+    }
+    products.forEach((p) => list.appendChild(buildProductRow(p)));
+  } catch (err) {
+    list.innerHTML = `<p>Couldn't load products: ${err.message}</p>`;
   }
-  products.forEach((p) => list.appendChild(buildProductRow(p)));
 }
 
 function buildProductRow(product) {
@@ -176,8 +228,12 @@ function buildProductRow(product) {
 
   row.querySelector('[data-action="delete"]').addEventListener("click", async () => {
     if (!confirm(`Remove "${product.name}"? It will be hidden from the site (order history is kept).`)) return;
-    await api("DELETE", `/api/admin?action=product&id=${product.id}`);
-    loadProducts();
+    try {
+      await api("DELETE", `/api/admin?action=product&id=${product.id}`);
+      loadProducts();
+    } catch (err) {
+      alert("Couldn't remove product: " + err.message);
+    }
   });
 
   row.querySelector('[data-action="edit"]').addEventListener("click", () => {
@@ -241,18 +297,22 @@ function wireEditForm(container, product, row) {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = e.target;
-    await api("PUT", `/api/admin?action=product&id=${product.id}`, {
-      name: f.name.value.trim(),
-      category: f.category.value,
-      description: f.description.value.trim(),
-      price_cents: Math.round(Number(f.price.value || 0) * 100),
-      discount_type: f.discount_type.value,
-      discount_value: Number(f.discount_value.value || 0),
-      in_stock: f.in_stock.checked,
-      is_featured: f.is_featured.checked,
-      is_active: f.is_active.checked,
-    });
-    loadProducts();
+    try {
+      await api("PUT", `/api/admin?action=product&id=${product.id}`, {
+        name: f.name.value.trim(),
+        category: f.category.value,
+        description: f.description.value.trim(),
+        price_cents: Math.round(Number(f.price.value || 0) * 100),
+        discount_type: f.discount_type.value,
+        discount_value: Number(f.discount_value.value || 0),
+        in_stock: f.in_stock.checked,
+        is_featured: f.is_featured.checked,
+        is_active: f.is_active.checked,
+      });
+      loadProducts();
+    } catch (err) {
+      alert("Couldn't save changes: " + err.message);
+    }
   });
 }
 
@@ -316,26 +376,38 @@ function renderManagePanel(container, product) {
 
   container.querySelectorAll('[data-action="delete-variant"]').forEach((btn) => {
     btn.addEventListener("click", async () => {
-      await api("DELETE", `/api/admin?action=variant&id=${btn.dataset.id}`);
-      loadProducts();
+      try {
+        await api("DELETE", `/api/admin?action=variant&id=${btn.dataset.id}`);
+        loadProducts();
+      } catch (err) {
+        alert("Couldn't remove color: " + err.message);
+      }
     });
   });
 
   container.querySelectorAll('[data-action="delete-image"]').forEach((btn) => {
     btn.addEventListener("click", async () => {
-      await api("DELETE", `/api/admin?action=image&id=${btn.dataset.id}`);
-      loadProducts();
+      try {
+        await api("DELETE", `/api/admin?action=image&id=${btn.dataset.id}`);
+        loadProducts();
+      } catch (err) {
+        alert("Couldn't remove photo: " + err.message);
+      }
     });
   });
 
   container.querySelector(".add-variant-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = e.target;
-    await api("POST", `/api/admin?action=product-variant&id=${product.id}`, {
-      name: f.name.value.trim(),
-      color_hex: f.color_hex.value,
-    });
-    loadProducts();
+    try {
+      await api("POST", `/api/admin?action=product-variant&id=${product.id}`, {
+        name: f.name.value.trim(),
+        color_hex: f.color_hex.value,
+      });
+      loadProducts();
+    } catch (err) {
+      alert("Couldn't add color: " + err.message);
+    }
   });
 
   container.querySelector(".add-photo-form").addEventListener("submit", async (e) => {
@@ -343,13 +415,17 @@ function renderManagePanel(container, product) {
     const f = e.target;
     const file = f.photo.files[0];
     if (!file) return;
-    const data_base64 = await fileToBase64(file);
-    await api("POST", `/api/admin?action=product-image&id=${product.id}`, {
-      data_base64,
-      mime: file.type,
-      variant_id: f.variant_id.value || null,
-    });
-    loadProducts();
+    try {
+      const data_base64 = await fileToBase64(file);
+      await api("POST", `/api/admin?action=product-image&id=${product.id}`, {
+        data_base64,
+        mime: file.type,
+        variant_id: f.variant_id.value || null,
+      });
+      loadProducts();
+    } catch (err) {
+      alert("Couldn't upload photo: " + err.message);
+    }
   });
 }
 
@@ -360,13 +436,17 @@ const STATUS_OPTIONS = ["new", "confirmed", "fulfilled", "cancelled"];
 async function loadOrders() {
   const list = document.getElementById("order-list");
   list.innerHTML = `<p>Loading…</p>`;
-  const orders = await api("GET", "/api/admin?action=orders");
-  list.innerHTML = "";
-  if (orders.length === 0) {
-    list.innerHTML = `<p>No orders yet.</p>`;
-    return;
+  try {
+    const orders = await api("GET", "/api/admin?action=orders");
+    list.innerHTML = "";
+    if (orders.length === 0) {
+      list.innerHTML = `<p>No orders yet.</p>`;
+      return;
+    }
+    orders.forEach((o) => list.appendChild(buildOrderRow(o)));
+  } catch (err) {
+    list.innerHTML = `<p>Couldn't load orders: ${err.message}</p>`;
   }
-  orders.forEach((o) => list.appendChild(buildOrderRow(o)));
 }
 
 function buildOrderRow(order) {
@@ -394,7 +474,11 @@ function buildOrderRow(order) {
   `;
 
   row.querySelector(".order-status").addEventListener("change", async (e) => {
-    await api("PUT", `/api/admin?action=order&id=${order.id}`, { status: e.target.value });
+    try {
+      await api("PUT", `/api/admin?action=order&id=${order.id}`, { status: e.target.value });
+    } catch (err) {
+      alert("Couldn't update order status: " + err.message);
+    }
   });
 
   return row;

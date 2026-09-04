@@ -5,7 +5,12 @@ export default async function handler(req, res) {
     res.status(405).json({ error: "Method not allowed" });
     return;
   }
-  const categories = await sql`SELECT slug, name FROM categories ORDER BY sort_order ASC, id ASC`;
-  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
-  res.status(200).json(categories);
+  try {
+    const categories = await sql`SELECT slug, name FROM categories ORDER BY sort_order ASC, id ASC`;
+    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    res.status(200).json(categories);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not load categories" });
+  }
 }
