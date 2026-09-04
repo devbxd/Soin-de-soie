@@ -398,6 +398,7 @@ section.block:last-of-type{ border-bottom: none; }
 .admin-login h1{ font-size: 26px; margin-bottom: 18px; }
 
 .admin-layout{ display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 65px); }
+.admin-layout[hidden]{ display: none; }
 .admin-sidebar{ border-right: 1px solid var(--hairline); background: var(--surface); padding: 20px 0; }
 .admin-nav-btn{
   display: flex; align-items: center; gap: 10px; width: 100%; padding: 14px 24px;

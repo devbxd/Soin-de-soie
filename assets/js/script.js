@@ -1,7 +1,7 @@
 // Soin de Soie — site behaviour
 
 // TODO: replace with the client's real WhatsApp number (international format, no "+")
-const WHATSAPP_NUMBER = "96170000000";
+const WHATSAPP_NUMBER = "9613052374";
 const WHATSAPP_MESSAGE = "Hello Soin de Soie, I'd like more information.";
 window.WHATSAPP_NUMBER = WHATSAPP_NUMBER;
 
