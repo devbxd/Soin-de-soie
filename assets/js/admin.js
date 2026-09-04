@@ -72,13 +72,13 @@ document.getElementById("add-category-form").addEventListener("submit", async (e
   const f = e.target;
   const name = f.name.value.trim();
   if (!name) return;
-  await api("POST", "/api/admin/categories", { name });
+  await api("POST", "/api/admin?action=categories", { name });
   f.reset();
   await loadCategories();
 });
 
 async function checkSession() {
-  const { authenticated } = await fetch("/api/admin/session").then((r) => r.json());
+  const { authenticated } = await fetch("/api/admin?action=session").then((r) => r.json());
   if (authenticated) showDashboard();
   else showLogin();
 }
@@ -88,7 +88,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
   const password = document.getElementById("login-password").value;
   const errorEl = document.getElementById("login-error");
   try {
-    await api("POST", "/api/admin/login", { password });
+    await api("POST", "/api/admin?action=login", { password });
     errorEl.hidden = true;
     showDashboard();
   } catch (err) {
@@ -98,7 +98,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
 });
 
 document.getElementById("logout-btn").addEventListener("click", async () => {
-  await api("POST", "/api/admin/logout");
+  await api("POST", "/api/admin?action=logout");
   showLogin();
 });
 
@@ -133,7 +133,7 @@ document.getElementById("add-product-form").addEventListener("submit", async (e)
     in_stock: f.in_stock.checked,
     is_featured: f.is_featured.checked,
   };
-  await api("POST", "/api/admin/products", payload);
+  await api("POST", "/api/admin?action=products", payload);
   f.reset();
   document.getElementById("add-product-form").hidden = true;
   loadProducts();
@@ -142,7 +142,7 @@ document.getElementById("add-product-form").addEventListener("submit", async (e)
 async function loadProducts() {
   const list = document.getElementById("product-list");
   list.innerHTML = `<p>Loading…</p>`;
-  const products = await api("GET", "/api/admin/products");
+  const products = await api("GET", "/api/admin?action=products");
   list.innerHTML = "";
   if (products.length === 0) {
     list.innerHTML = `<p>No products yet — add your first one above.</p>`;
@@ -176,7 +176,7 @@ function buildProductRow(product) {
 
   row.querySelector('[data-action="delete"]').addEventListener("click", async () => {
     if (!confirm(`Remove "${product.name}"? It will be hidden from the site (order history is kept).`)) return;
-    await api("DELETE", `/api/admin/products/${product.id}`);
+    await api("DELETE", `/api/admin?action=product&id=${product.id}`);
     loadProducts();
   });
 
@@ -241,7 +241,7 @@ function wireEditForm(container, product, row) {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = e.target;
-    await api("PUT", `/api/admin/products/${product.id}`, {
+    await api("PUT", `/api/admin?action=product&id=${product.id}`, {
       name: f.name.value.trim(),
       category: f.category.value,
       description: f.description.value.trim(),
@@ -316,14 +316,14 @@ function renderManagePanel(container, product) {
 
   container.querySelectorAll('[data-action="delete-variant"]').forEach((btn) => {
     btn.addEventListener("click", async () => {
-      await api("DELETE", `/api/admin/variants/${btn.dataset.id}`);
+      await api("DELETE", `/api/admin?action=variant&id=${btn.dataset.id}`);
       loadProducts();
     });
   });
 
   container.querySelectorAll('[data-action="delete-image"]').forEach((btn) => {
     btn.addEventListener("click", async () => {
-      await api("DELETE", `/api/admin/images/${btn.dataset.id}`);
+      await api("DELETE", `/api/admin?action=image&id=${btn.dataset.id}`);
       loadProducts();
     });
   });
@@ -331,7 +331,7 @@ function renderManagePanel(container, product) {
   container.querySelector(".add-variant-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = e.target;
-    await api("POST", `/api/admin/products/${product.id}/variants`, {
+    await api("POST", `/api/admin?action=product-variant&id=${product.id}`, {
       name: f.name.value.trim(),
       color_hex: f.color_hex.value,
     });
@@ -344,7 +344,7 @@ function renderManagePanel(container, product) {
     const file = f.photo.files[0];
     if (!file) return;
     const data_base64 = await fileToBase64(file);
-    await api("POST", `/api/admin/products/${product.id}/images`, {
+    await api("POST", `/api/admin?action=product-image&id=${product.id}`, {
       data_base64,
       mime: file.type,
       variant_id: f.variant_id.value || null,
@@ -360,7 +360,7 @@ const STATUS_OPTIONS = ["new", "confirmed", "fulfilled", "cancelled"];
 async function loadOrders() {
   const list = document.getElementById("order-list");
   list.innerHTML = `<p>Loading…</p>`;
-  const orders = await api("GET", "/api/admin/orders");
+  const orders = await api("GET", "/api/admin?action=orders");
   list.innerHTML = "";
   if (orders.length === 0) {
     list.innerHTML = `<p>No orders yet.</p>`;
@@ -394,7 +394,7 @@ function buildOrderRow(order) {
   `;
 
   row.querySelector(".order-status").addEventListener("change", async (e) => {
-    await api("PUT", `/api/admin/orders/${order.id}`, { status: e.target.value });
+    await api("PUT", `/api/admin?action=order&id=${order.id}`, { status: e.target.value });
   });
 
   return row;

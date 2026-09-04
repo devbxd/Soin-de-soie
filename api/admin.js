@@ -1,8 +1,10 @@
-// Consolidated admin API — every /api/admin/* route is handled here as one
-// serverless function (Vercel's Hobby plan caps the number of functions per
-// deployment, and the earlier one-file-per-route layout exceeded it).
-import { sql, toPublicProduct, attachVariantsAndImages } from "../_lib/db.js";
-import { verifyPassword, createSessionCookie, clearSessionCookie, isAuthenticated } from "../_lib/auth.js";
+// Consolidated admin API — every admin action goes through this one
+// serverless function, dispatched by an `action` query param instead of a
+// dynamic file-path segment. (A `[...path].js` catch-all route was tried
+// first but did not resolve `req.query.path` correctly on this deployment;
+// a flat, query-based route sidesteps that entirely and is just as capable.)
+import { sql, toPublicProduct, attachVariantsAndImages } from "./_lib/db.js";
+import { verifyPassword, createSessionCookie, clearSessionCookie, isAuthenticated } from "./_lib/auth.js";
 
 const STATUS_OPTIONS = ["new", "confirmed", "fulfilled", "cancelled"];
 
@@ -11,11 +13,10 @@ function slugify(name) {
 }
 
 export default async function handler(req, res) {
-  const path = Array.isArray(req.query.path) ? req.query.path : req.query.path ? [req.query.path] : [];
-  const [resource, id, sub] = path;
+  const { action, id } = req.query;
 
   // ---------- public auth endpoints ----------
-  if (resource === "login" && req.method === "POST") {
+  if (action === "login" && req.method === "POST") {
     const { password } = req.body || {};
     if (!password || !verifyPassword(password)) {
       res.status(401).json({ error: "Incorrect password" });
@@ -25,12 +26,12 @@ export default async function handler(req, res) {
     res.status(200).json({ authenticated: true });
     return;
   }
-  if (resource === "logout") {
+  if (action === "logout") {
     res.setHeader("Set-Cookie", clearSessionCookie());
     res.status(200).json({ authenticated: false });
     return;
   }
-  if (resource === "session" && req.method === "GET") {
+  if (action === "session" && req.method === "GET") {
     res.status(200).json({ authenticated: isAuthenticated(req) });
     return;
   }
@@ -43,7 +44,7 @@ export default async function handler(req, res) {
 
   try {
     // ---------- products ----------
-    if (resource === "products" && !id) {
+    if (action === "products") {
       if (req.method === "GET") {
         const rows = await sql`SELECT * FROM products ORDER BY category ASC, sort_order ASC, id ASC`;
         const { variantsByProduct, imagesByProduct } = await attachVariantsAndImages(rows);
@@ -79,7 +80,7 @@ export default async function handler(req, res) {
       }
     }
 
-    if (resource === "products" && id && !sub) {
+    if (action === "product" && id) {
       if (req.method === "PUT") {
         const b = req.body || {};
         const [existing] = await sql`SELECT * FROM products WHERE id = ${id}`;
@@ -107,7 +108,7 @@ export default async function handler(req, res) {
       }
     }
 
-    if (resource === "products" && id && sub === "images" && req.method === "POST") {
+    if (action === "product-image" && id && req.method === "POST") {
       const { data_base64, mime, variant_id, sort_order } = req.body || {};
       if (!data_base64 || !mime) {
         res.status(400).json({ error: "data_base64 and mime are required" });
@@ -123,7 +124,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (resource === "products" && id && sub === "variants" && req.method === "POST") {
+    if (action === "product-variant" && id && req.method === "POST") {
       const { name, color_hex, sort_order } = req.body || {};
       if (!name) {
         res.status(400).json({ error: "name is required" });
@@ -139,7 +140,7 @@ export default async function handler(req, res) {
     }
 
     // ---------- categories ----------
-    if (resource === "categories" && !id) {
+    if (action === "categories") {
       if (req.method === "GET") {
         const rows = await sql`SELECT * FROM categories ORDER BY sort_order ASC, id ASC`;
         res.status(200).json(rows);
@@ -165,21 +166,21 @@ export default async function handler(req, res) {
     }
 
     // ---------- images ----------
-    if (resource === "images" && id && req.method === "DELETE") {
+    if (action === "image" && id && req.method === "DELETE") {
       await sql`DELETE FROM product_images WHERE id = ${id}`;
       res.status(200).json({ ok: true });
       return;
     }
 
     // ---------- variants ----------
-    if (resource === "variants" && id && req.method === "DELETE") {
+    if (action === "variant" && id && req.method === "DELETE") {
       await sql`DELETE FROM product_variants WHERE id = ${id}`;
       res.status(200).json({ ok: true });
       return;
     }
 
     // ---------- orders ----------
-    if (resource === "orders" && !id && req.method === "GET") {
+    if (action === "orders" && req.method === "GET") {
       const { status } = req.query;
       const orders = status
         ? await sql`SELECT * FROM orders WHERE status = ${status} ORDER BY created_at DESC`
@@ -204,7 +205,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (resource === "orders" && id && req.method === "PUT") {
+    if (action === "order" && id && req.method === "PUT") {
       const { status } = req.body || {};
       if (!STATUS_OPTIONS.includes(status)) {
         res.status(400).json({ error: "Invalid status" });
