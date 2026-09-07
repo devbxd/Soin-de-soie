@@ -189,10 +189,7 @@ function buildCard(product, { spotlight = false } = {}) {
   const infoBlock = buildInfoBlock(product, { spotlight });
 
   if (spotlight) {
-    card.style.display = "grid";
-    card.style.gridTemplateColumns = "260px 1fr";
-    card.style.gap = "32px";
-    card.style.alignItems = "start";
+    card.classList.add("product-card-spotlight");
     card.append(mediaBlock, infoBlock);
   } else {
     // Grid cards render media, then the info fields flat (matches the
