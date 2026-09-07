@@ -1,6 +1,6 @@
 // Soin de Soie — site behaviour
 
-const WHATSAPP_NUMBER = "9613052374";
+const WHATSAPP_NUMBER = "96179376629";
 const WHATSAPP_MESSAGE = "Hello Soin de Soie, I'd like more information.";
 window.WHATSAPP_NUMBER = WHATSAPP_NUMBER;
 
