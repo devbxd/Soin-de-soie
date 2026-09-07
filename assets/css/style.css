@@ -1,17 +1,17 @@
 /* Soin de Soie — feuille de style principale */
 
 :root{
-  /* Mint & beige palette (client-directed — variable names kept from the
-     earlier rose/wine palette to avoid touching every selector, only the
-     color values changed). */
+  /* Rose (brand-logo pink) & beige palette (client-directed — variable
+     names kept from the earlier rose/wine palette to avoid touching every
+     selector, only the color values changed). */
   --bg: #F1ECE0;          /* beige */
   --surface: #F8F4EA;     /* light beige */
   --surface-2: #FFFFFF;
   --ink: #2B2A24;         /* warm charcoal, never pure black */
   --ink-soft: #6B6659;
-  --rose: #A8C3AE;        /* soft mint — hover/light accent */
-  --rose-deep: #7FA98F;   /* medium mint */
-  --wine: #3F6B54;        /* deep mint — CTAs, links, strong accent */
+  --rose: #F2C0D0;        /* soft rose — hover/light accent */
+  --rose-deep: #E68CAA;   /* medium rose (brand logo pink) */
+  --wine: #A8355F;        /* deep rose — CTAs, links, strong accent */
   --gold: #A79B6F;        /* muted khaki — dots, swatch ring, stars */
   --mauve: #8C7B5E;       /* warm taupe — discount strike-through */
   --hairline: rgba(43,42,36,0.16);
